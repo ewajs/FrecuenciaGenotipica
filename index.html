@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Cálculo de Frecuencia Genotípica</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mt-5">Cálculo de Frecuencia Genotípica</h1>
+        <div class="row justify-content-md-center mt-3">
+            <div class="col-auto">
+                <label for="AAfreq">Frecuencia AA (F. Aleat.)</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="AAfreq" value="50"/>
+                    <div class="input-group-append">
+                        <span class="input-group-text" >%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label for="AAfreq">Frecuencia Aa (F. Aleat.)</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="Aafreq" value="0"/>
+                    <div class="input-group-append">
+                        <span class="input-group-text" >%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label for="aafreq">Frecuencia aa (F. Aleat.)</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="aafreq" value="50"/>
+                    <div class="input-group-append">
+                        <span class="input-group-text" >%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-md-center mt-3">
+            <div class="col-auto">
+                <label for="gen">Generaciones</label>
+                <input type="text" class="form-control" id="gen" value="10"/>
+            </div>
+        </div>
+        <div class="row justify-content-md-center mt-3">
+            <div class="col-auto">
+                <button class="btn btn-primary" id="calc">Calcular</button>
+            </div>
+        </div>
+        <div class="row justify-content-md-center mt-3">
+            <div class="col">
+                <h3 class="text-center">Autofecundación</h3>
+                <table class="table text-center" id="autofec">
+                    <tr>
+                        <th>Generación</th>
+                        <th>AA</th>
+                        <th>Aa</th>
+                        <th>aa</th>
+                    </tr>
+                </table>
+            </div>
+            <div class="col">
+                <h3 class="text-center">Fecundación Aleatoria</h3>
+                <table class="table text-center" id="randfec">
+                    <tr>
+                        <th>Generación</th>
+                        <th>AA</th>
+                        <th>Aa</th>
+                        <th>aa</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+<script>
+    var calc = document.getElementById("calc");
+    var autofec = document.getElementById("autofec");
+    var randfec = document.getElementById("randfec");
+    var AAfreq = document.getElementById("AAfreq");
+    var Aafreq = document.getElementById("Aafreq");
+    var aafreq = document.getElementById("aafreq");
+    var gen = document.getElementById("gen");
+
+    calc.addEventListener("click", function () {
+        var tot = parseInt(AAfreq.value) + parseInt(Aafreq.value) + parseInt(aafreq.value);
+        if (tot == 100) {
+            populateAutoFec();
+            populateRandFec();
+        } else {
+            alert("La suma de las tres frecuencias debe dar 100%.");
+            randfec.innerHTML = '<tr><th>Generación</th><th>AA</th><th>Aa</th><th>aa</th></tr>';
+            autofec.innerHTML = '<tr><th>Generación</th><th>AA</th><th>Aa</th><th>aa</th></tr>';
+        }
+    })
+
+    function autoFecundation(generationNumber) {
+        var generations = [];
+        var descendants = {
+            AA: 0.25,
+            Aa: 0.5,
+            aa: 0.25
+        };
+        generations.push(descendants);
+        for (var i = 0; i < generationNumber - 1; i++) {
+            var descendants = {};
+            descendants.AA = 0.25 * generations[i].Aa + generations[i].AA;
+            descendants.aa =  0.25 * generations[i].Aa + generations[i].AA;
+            descendants.Aa = 0.5 * generations[i].Aa;
+            generations.push(descendants);
+        }
+        return generations;
+    }
+
+    function randFecundation(AAp, Aap, aap, generationNumber) {
+        var generations = [];
+        var descendants = {
+            AA: AAp,
+            Aa: Aap,
+            aa: aap
+        };
+        generations.push(descendants);
+        for (var i = 0; i < generationNumber - 1; i++){
+            var Ag = generations[i].AA + 0.5 * generations[i].Aa;
+            var ag = generations[i].aa + 0.5 * generations[i].Aa;
+
+            var descendants = {
+                AA: Ag * Ag,
+                Aa: 2 * Ag * ag,
+                aa: ag * ag
+            };
+            generations.push(descendants)
+        }
+        return generations;
+    }
+
+    function populateAutoFec() {
+        var generations = autoFecundation(parseInt(gen.value));
+        autofec.innerHTML = '<tr><th>Generación</th><th>AA</th><th>Aa</th><th>aa</th></tr>';
+        for (var i = 0; i < generations.length; i++) {
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            td.innerText = i+1;
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].AA.toFixed(4);
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].Aa.toFixed(4);
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].aa.toFixed(4);
+            tr.appendChild(td);
+            autofec.appendChild(tr);
+        }
+    }
+    function populateRandFec() {
+        var AA = parseInt(AAfreq.value)/100;
+        var Aa = parseInt(Aafreq.value)/100;
+        var aa = parseInt(aafreq.value)/100;
+        var generations = randFecundation(AA, Aa, aa, parseInt(gen.value));
+        randfec.innerHTML = '<tr><th>Generación</th><th>AA</th><th>Aa</th><th>aa</th></tr>';
+        for (var i = 0; i < generations.length; i++) {
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            td.innerText = i+1;
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].AA.toFixed(4);
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].Aa.toFixed(4);
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerText = generations[i].aa.toFixed(4);
+            tr.appendChild(td);
+            randfec.appendChild(tr);
+        }
+
+    }
+</script>
+</body>
+</html>
